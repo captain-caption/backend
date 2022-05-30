@@ -2,12 +2,17 @@
 
 ## Links
 
-Trello Board:
+[Trello Board](https://trello.com/b/uDdjyRBW/captain-caption-user-stories-features)
+
+[Figma DM + WF](https://www.figma.com/file/GoLyX821kkeUm6x4f7d8GR/Capn'-Caption?node-id=0%3A1)
+
+[frontend repo](https://github.com/captain-caption/frontend)
+
+[backend repo](https://github.com/captain-caption/backend)
 
 ## Deadlines
 
-- Mock Presentation Date: TBD
-- Final Presentation Date: TBD
+- Final Presentation Date: June 3.
 
 ## Members
 
@@ -16,6 +21,14 @@ Trello Board:
 - Yu-Wei Hsieh
 - Vinny Shipley
 - Dylan Ullrich
+
+## Wire Frame
+
+![Wire Frame](/img/wireframe.png)
+
+## Domain Model
+
+![Domain Model](/img/Domain%20Model.png)
 
 ### Cooperation Plan
 
