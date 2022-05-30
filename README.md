@@ -12,7 +12,7 @@
 
 ## Deadlines
 
-- Final Presentation Date: June 2, 2022
+- Final Presentation Date: June 3.
 
 ## Members
 
