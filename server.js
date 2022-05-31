@@ -55,7 +55,7 @@ async function handleDeleteTranscript(req, res) {
 async function handleTranslationRequest(req, res) {
   const url = process.env.GOOGLE_API_URL;
   let text = '';
-  req.data.data.map(e => text + e);
+  req.data.data.map(e => {text = `${text.trim()} ${e.trim()}`});
   const params = {
     q: text,
     target: req.data.target,
