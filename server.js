@@ -30,11 +30,11 @@ app.get('/translate', handleTranslationRequest);
 async function handleGetTranscript(req, res) {
   await Transcript.find()
     .then(response => res.status(200).send(response))
-    .catch(error => { res.status(500).send(error); console.log(error); })
+    .catch(error => { res.status(500).send(error); console.log(error); });
 }
 
 async function handlePostTranscript(req, res) {
-  const newTranslation = await Transcript.create({ timestamp: new Date(), username: '', raw_text: req.data.data})
+  const newTranslation = await Transcript.create({ ...req.body })
     .then(response => res.status(200).send(newTranslation))
     .catch(error => { res.status(500).send(error) });
 }
@@ -55,23 +55,15 @@ async function handleDeleteTranscript(req, res) {
 
 async function handleTranslationRequest(req, res) {
   const url = process.env.GOOGLE_API_URL;
-  // let text = '';
-  // req.data.data.map(e => {text = `${text.trim()} ${e.trim()}`});
   const params = {
-    q: req.data.data,
-    target: req.data.target,
+    q: req.data.raw_text,
+    target: req.data.code,
     key: process.env.GOOGLE_API_KEY
   }
 
-  let transcriptObject = req.body
-
   await axios.post(url, { params })
-    .then(response => res.status(200).send(response.body.data))
+    .then(response => {handlePostTranscript({...req.body, ...response.body.data}); res.status(200).send(response.body.data);})
     .catch(error => res.status(500).send(error));
-
-  
-
-  handlePostTranscript(req);
 }
 
 app.listen(PORT, () => console.log(`listening on ${PORT}`));
