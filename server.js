@@ -42,8 +42,9 @@ async function handlePostTranscript(req, res) {
   }
   console.log(reqObj);
   try {
-    const newTranslation = await Transcript.create(reqObj);
-    res.send(newTranslation);
+    const newTranscript = await Transcript.create(reqObj);
+    console.log(newTranscript);
+    res.send(newTranscript);
   } catch (err) {
     res.send('Internal Server error');
   }
@@ -65,9 +66,14 @@ async function handleDeleteTranscript(req, res) {
 
 async function handleTranslationRequest(req, res) {
   let url = `${process.env.GOOGLE_API_URL}?key=${process.env.GOOGLE_API_KEY}&q=${encodeURIComponent(req.query.q)}&target=${encodeURIComponent(req.query.target)}`;
-  await axios.post(url)
-    .then(response =>  {handlePostTranscript({username: `${req.query.username}`, timestamp: `${new Date()}`, raw_text: `${req.query.q}`, translated_text: `${response.data.data.translations[0].translatedText}`}); res.status(200).send(response.data.data);})
-    .catch(error => res.status(500).send(error));
+  try {
+    let response = await axios.post(url);
+    let translatedObj = await Transcript.create({username: `${req.query.username}`, timestamp: `${new Date()}`, raw_text: `${req.query.q}`, translated_text: `${response.data.data.translations[0].translatedText}`});
+    console.log(translatedObj);
+    res.status(200).send(response.data.data);
+  } catch (error) {
+    res.status(500).send(error);
+  }
 }
 
 app.get('/', (req, res) => {res.status(200).send('Connection ok');});
