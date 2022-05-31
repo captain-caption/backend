@@ -17,7 +17,7 @@ mongoose.connect(url);
 // routes
 
 // To/From Client
-app.get('*', (req, res) => {res.send('This is working');});
+app.get('*', (req, res) => {res.status(200).send('This is working');});
 app.get('/', (req, res) => {res.status(200).send('Connection ok');});
 app.get('/transcript', handleGetTranscript);
 app.post('/transcript', handlePostTranscript);
