@@ -26,10 +26,6 @@ app.delete('/transcript/:id', handleDeleteTranscript);
 // To/From Google API
 app.get('/translate', handleTranslationRequest);
 
-//To/From MongoDB
-// post - raw text to MongoDB
-// put - translated text to MongoDB
-
 async function handleGetTranscript(req, res) {
   await Transcript.find()
     .then(response => res.status(200).send(response))
@@ -58,8 +54,10 @@ async function handleDeleteTranscript(req, res) {
 
 async function handleTranslationRequest(req, res) {
   const url = process.env.GOOGLE_API_URL;
+  let text = '';
+  req.data.data.map(e => text + e);
   const params = {
-    q: req.data.data,
+    q: text,
     target: req.data.target,
     key: process.env.GOOGLE_API_KEY
   }
