@@ -1,6 +1,7 @@
 
 'use strict';
 require('dotenv').config();const express = require('express');
+const axios = require('axios');
 const app = express();
 const mongoose = require('mongoose');
 const Transcript = require('./models/transcript-object');
@@ -17,8 +18,7 @@ mongoose.connect(url);
 // routes
 
 // To/From Client
-app.get('*', (req, res) => {res.send('This is working');});
-app.get('/', (req, res) => {res.status(200).send('Connection ok');});
+
 app.get('/transcript', handleGetTranscript);
 app.post('/transcript', handlePostTranscript);
 app.delete('/transcript/:id', handleDeleteTranscript);
@@ -26,20 +26,27 @@ app.delete('/transcript/:id', handleDeleteTranscript);
 // To/From Google API
 app.get('/translate', handleTranslationRequest);
 
-//To/From MongoDB
-// post - raw text to MongoDB
-// put - translated text to MongoDB
-
 async function handleGetTranscript(req, res) {
   await Transcript.find()
     .then(response => res.status(200).send(response))
-    .catch(error => { res.status(500).send(error); console.log(error); })
+    .catch(error => { res.status(500).send(error); console.log(error); });
 }
 
 async function handlePostTranscript(req, res) {
-  const newTranslation = await Transcript.create({ ...req.body })
-    .then(response => res.status(200).send(newTranslation))
-    .catch(error => { res.status(500).send(error) });
+  console.log(req);
+  let reqObj = {};
+  if (req.query) {
+    reqObj = {...req.query}
+  } else {
+    reqObj = {...req}
+  }
+  console.log(reqObj);
+  try {
+    const newTranslation = await Transcript.create(reqObj);
+    res.send(newTranslation);
+  } catch (err) {
+    res.send('Internal Server error');
+  }
 }
 
 async function handleDeleteTranscript(req, res) {
@@ -57,16 +64,13 @@ async function handleDeleteTranscript(req, res) {
 }
 
 async function handleTranslationRequest(req, res) {
-  const url = process.env.GOOGLE_API_URL;
-  const params = {
-    q: req.data.data,
-    target: req.data.target,
-    key: process.env.GOOGLE_API_KEY
-  }
-
-  await axios.post(url, { params })
-    .then(response => res.status(200).send(response.body.data))
+  let url = `${process.env.GOOGLE_API_URL}?key=${process.env.GOOGLE_API_KEY}&q=${encodeURIComponent(req.query.q)}&target=${encodeURIComponent(req.query.target)}`;
+  await axios.post(url)
+    .then(response =>  {handlePostTranscript({username: `${req.query.username}`, timestamp: `${new Date()}`, raw_text: `${req.query.q}`, translated_text: `${response.data.data.translations[0].translatedText}`}); res.status(200).send(response.data.data);})
     .catch(error => res.status(500).send(error));
 }
+
+app.get('/', (req, res) => {res.status(200).send('Connection ok');});
+app.get('*', (req, res) => {res.status(200).send('This is working');});
 
 app.listen(PORT, () => console.log(`listening on ${PORT}`));
