@@ -19,6 +19,7 @@ mongoose.connect(url);
 // To/From Client
 app.get('*', (req, res) => {res.status(200).send('This is working');});
 app.get('/', (req, res) => {res.status(200).send('Connection ok');});
+
 app.get('/transcript', handleGetTranscript);
 app.post('/transcript', handlePostTranscript);
 app.delete('/transcript/:id', handleDeleteTranscript);
@@ -33,7 +34,7 @@ async function handleGetTranscript(req, res) {
 }
 
 async function handlePostTranscript(req, res) {
-  const newTranslation = await Transcript.create({ ...req.body })
+  const newTranslation = await Transcript.create({ timestamp: new Date(), username: '', raw_text: req.data.data})
     .then(response => res.status(200).send(newTranslation))
     .catch(error => { res.status(500).send(error) });
 }
@@ -54,17 +55,23 @@ async function handleDeleteTranscript(req, res) {
 
 async function handleTranslationRequest(req, res) {
   const url = process.env.GOOGLE_API_URL;
-  let text = '';
-  req.data.data.map(e => {text = `${text.trim()} ${e.trim()}`});
+  // let text = '';
+  // req.data.data.map(e => {text = `${text.trim()} ${e.trim()}`});
   const params = {
-    q: text,
+    q: req.data.data,
     target: req.data.target,
     key: process.env.GOOGLE_API_KEY
   }
 
+  let transcriptObject = req.body
+
   await axios.post(url, { params })
     .then(response => res.status(200).send(response.body.data))
     .catch(error => res.status(500).send(error));
+
+  
+
+  handlePostTranscript(req);
 }
 
 app.listen(PORT, () => console.log(`listening on ${PORT}`));
