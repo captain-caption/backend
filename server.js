@@ -27,7 +27,7 @@ app.post('/transcript', handlePostTranscript);
 app.delete('/transcript/:id', handleDeleteTranscript);
 
 // To/From Google API
-app.get('/translate', handleTranslationRequest);
+app.post('/translate', handleTranslationRequest);
 
 /* -------------------------------- HANDLERS -------------------------------- */
 
@@ -65,10 +65,10 @@ async function handleDeleteTranscript(req, res) {
 
 // POST (Translate and Create) - Transcript Object
 async function handleTranslationRequest(req, res) {
-  let url = `${process.env.GOOGLE_API_URL}?key=${process.env.GOOGLE_API_KEY}&q=${encodeURIComponent(req.query.raw_text)}&target=${encodeURIComponent(req.query.code)}`;
+  let url = `${process.env.GOOGLE_API_URL}?key=${process.env.GOOGLE_API_KEY}&q=${encodeURIComponent(req.body.raw_text)}&target=${encodeURIComponent(req.body.code)}`;
   try {
     let response = await axios.post(url);
-    await Transcript.create({username: `${req.query.username}`, timestamp: `${new Date()}`, raw_text: `${req.query.raw_text}`, translated_text: `${response.data.data.translations[0].translatedText}`});
+    await Transcript.create({username: `${req.body.username}`, timestamp: `${new Date()}`, raw_text: `${req.body.raw_text}`, translated_text: `${response.data.data.translations[0].translatedText}`});
     res.status(200).send(response);
   } catch (error) {
     res.status(500).send(error);
