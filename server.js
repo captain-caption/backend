@@ -1,60 +1,63 @@
-
 'use strict';
-require('dotenv').config();const express = require('express');
+
+/* --------------------------------- GLOBALS --------------------------------- */
+
+require('dotenv').config();
 const axios = require('axios');
-const app = express();
-const mongoose = require('mongoose');
 const Transcript = require('./models/transcript-object');
 
-const cors = require('cors');
-
-app.use(cors());
+const express = require('express');
+const app = express();
 app.use(express.json());
 
-const PORT = process.env.PORT || 3002;
-const url = process.env.MONGO_DB_URL;
-mongoose.connect(url);
+const cors = require('cors');
+app.use(cors());
 
-// routes
+const mongoose = require('mongoose');
+mongoose.connect(process.env.MONGO_DB_URL);
+
+const PORT = process.env.PORT || 3002;
+
+/* --------------------------------- ROUTES --------------------------------- */
 
 // To/From Client
-
 app.get('/transcript', handleGetTranscript);
 app.post('/transcript', handlePostTranscript);
 app.delete('/transcript/:id', handleDeleteTranscript);
 
 // To/From Google API
-app.get('/translate', handleTranslationRequest);
+app.post('/translate', handleTranslationRequest);
 
+/* -------------------------------- HANDLERS -------------------------------- */
+
+// GET - Transcript Objects
 async function handleGetTranscript(req, res) {
   await Transcript.find()
-    .then(response => res.status(200).send(response))
-    .catch(error => { res.status(500).send(error); console.log(error); });
+    .then((response) => res.status(200).send(response))
+    .catch((error) => res.status(500).send(error));
 }
 
+// POST (Create) - Transcript Object
 async function handlePostTranscript(req, res) {
-  console.log(req);
-  let reqObj = {};
-  if (req.query) {
-    reqObj = {...req.query}
-  } else {
-    reqObj = {...req}
-  }
-  console.log(reqObj);
   try {
-    const newTranscript = await Transcript.create(reqObj);
-    console.log(newTranscript);
+    const newTranscript = await Transcript.create({
+      username: `${req.body.username}`,
+      timestamp: `${new Date()}`,
+      raw_text: `${req.body.raw_text}`,
+    });
     res.send(newTranscript);
   } catch (err) {
-    res.send('Internal Server error');
+    res.status(500).send('Internal Server error');
   }
 }
 
+// DELETE - Transcript Object
 async function handleDeleteTranscript(req, res) {
   const { id } = req.params;
   try {
     const trans = await Transcript.findOne({ _id: id });
-    if (!trans) res.status(400).send('Unable to delete transcrpipt. Call the FBI');
+    if (!trans)
+      res.status(400).send('Unable to delete transcript. Call the FBI');
     else {
       await Transcript.findByIdAndDelete(id);
       res.status(204).send('Bye bye private information');
@@ -64,19 +67,37 @@ async function handleDeleteTranscript(req, res) {
   }
 }
 
+// POST (Translate and Create) - Transcript Object
 async function handleTranslationRequest(req, res) {
-  let url = `${process.env.GOOGLE_API_URL}?key=${process.env.GOOGLE_API_KEY}&q=${encodeURIComponent(req.query.q)}&target=${encodeURIComponent(req.query.target)}`;
+  let url = `${process.env.GOOGLE_API_URL}?key=${
+    process.env.GOOGLE_API_KEY
+  }&q=${encodeURIComponent(req.body.raw_text)}&target=${encodeURIComponent(
+    req.body.code
+  )}`;
   try {
     let response = await axios.post(url);
-    let translatedObj = await Transcript.create({username: `${req.query.username}`, timestamp: `${new Date()}`, raw_text: `${req.query.q}`, translated_text: `${response.data.data.translations[0].translatedText}`});
-    console.log(translatedObj);
-    res.status(200).send(response.data.data);
+    let transcriptObject = await Transcript.create({
+      username: `${req.body.username}`,
+      timestamp: `${new Date()}`,
+      raw_text: `${req.body.raw_text}`,
+      translated_text: `${response.data.data.translations[0].translatedText}`,
+    });
+    console.log(response.data.data.translations[0].translatedText);
+    res.status(200).send(transcriptObject);
   } catch (error) {
     res.status(500).send(error);
   }
 }
 
-app.get('/', (req, res) => {res.status(200).send('Connection ok');});
-app.get('*', (req, res) => {res.status(200).send('This is working');});
+/* ---------------------------- CATCH-ALL ROUTES ---------------------------- */
+
+app.get('/', (req, res) => {
+  res.status(200).send('SUCCESS: Designate route (/transcript, /translate)');
+});
+app.get('*', (req, res) => {
+  res.status(200).send('SUCCESS');
+});
+
+/* -------------------------------- LISTENER -------------------------------- */
 
 app.listen(PORT, () => console.log(`listening on ${PORT}`));
