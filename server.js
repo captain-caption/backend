@@ -53,7 +53,7 @@ async function handleDeleteTranscript(req, res) {
   const { id } = req.params;
   try {
     const trans = await Transcript.findOne({ _id: id });
-    if (!trans) res.status(400).send('Unable to delete transcrpipt. Call the FBI');
+    if (!trans) res.status(400).send('Unable to delete transcript. Call the FBI');
     else {
       await Transcript.findByIdAndDelete(id);
       res.status(204).send('Bye bye private information');
