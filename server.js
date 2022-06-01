@@ -5,6 +5,7 @@
 require('dotenv').config();
 const axios = require('axios');
 const Transcript = require('./models/transcript-object');
+const verifyUser = require('./auth');
 
 const express = require('express');
 const app = express();
