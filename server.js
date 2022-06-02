@@ -33,63 +33,87 @@ app.post('/translate', handleTranslationRequest);
 
 // GET - Transcript Objects
 async function handleGetTranscript(req, res) {
-  await Transcript.find()
-    .then((response) => res.status(200).send(response))
-    .catch((error) => res.status(500).send(error));
+  verifyUser(req, async (err, user) => {
+    if (err) {
+      console.error(err);
+      res.send('invalid token');
+    } else {
+      await Transcript.find()
+        .then((response) => res.status(200).send(response))
+        .catch((error) => res.status(500).send(error));
+    }
+  });
 }
-
 // POST (Create) - Transcript Object
 async function handlePostTranscript(req, res) {
-  try {
-    const newTranscript = await Transcript.create({
-      username: `${req.body.username}`,
-      timestamp: `${new Date()}`,
-      raw_text: `${req.body.raw_text}`,
-    });
-    res.send(newTranscript);
-  } catch (err) {
-    res.status(500).send('Internal Server error');
-  }
+  verifyUser(req, async (err, user) => {
+    if (err) {
+      console.error(err);
+      res.send('invalid token');
+    } else {
+      try {
+        const newTranscript = await Transcript.create({
+          username: `${req.body.username}`,
+          timestamp: `${new Date()}`,
+          raw_text: `${req.body.raw_text}`,
+        });
+        res.send(newTranscript);
+      } catch (err) {
+        res.status(500).send('Internal Server error');
+      }
+    }
+  });
 }
-
 // DELETE - Transcript Object
 async function handleDeleteTranscript(req, res) {
-  const { id } = req.params;
-  try {
-    const trans = await Transcript.findOne({ _id: id });
-    if (!trans)
-      res.status(400).send('Unable to delete transcript. Call the FBI');
-    else {
-      await Transcript.findByIdAndDelete(id);
-      res.status(204).send('Bye bye private information');
+  verifyUser(req, async (err, user) => {
+    if (err) {
+      console.error(err);
+      res.send('invalid token');
+    } else {
+      const { id } = req.params;
+      try {
+        const trans = await Transcript.findOne({ _id: id });
+        if (!trans)
+          res.status(400).send('Unable to delete transcript. Call the FBI');
+        else {
+          await Transcript.findByIdAndDelete(id);
+          res.status(204).send('Bye bye private information');
+        }
+      } catch (err) {
+        res.status(500).send('Internal server error');
+      }
     }
-  } catch (err) {
-    res.status(500).send('Internal server error');
-  }
+  });
 }
-
 // POST (Translate and Create) - Transcript Object
 async function handleTranslationRequest(req, res) {
-  let url = `${process.env.GOOGLE_API_URL}?key=${
-    process.env.GOOGLE_API_KEY
-  }&q=${encodeURIComponent(req.body.raw_text)}&target=${encodeURIComponent(
-    req.body.code
-  )}`;
-  try {
-    let response = await axios.post(url);
-    let transcriptObject = await Transcript.create({
-      username: `${req.body.username}`,
-      timestamp: `${new Date()}`,
-      raw_text: `${req.body.raw_text}`,
-      translated_text: `${response.data.data.translations[0].translatedText}`,
-    });
-    console.log(response.data.data.translations[0].translatedText);
-    res.status(200).send(transcriptObject);
-  } catch (error) {
-    res.status(500).send(error);
-  }
+  verifyUser(req, async (err, user) => {
+    if (err) {
+      console.error(err);
+      res.send('invalid token');
+    } else {
+      let url = `${process.env.GOOGLE_API_URL}?key=${
+        process.env.GOOGLE_API_KEY
+      }&q=${encodeURIComponent(req.body.raw_text)}&target=${encodeURIComponent(
+        req.body.code
+      )}`;
+      try {
+        let response = await axios.post(url);
+        let transcriptObject = await Transcript.create({
+          username: `${req.body.username}`,
+          timestamp: `${new Date()}`,
+          raw_text: `${req.body.raw_text}`,
+          translated_text: `${response.data.data.translations[0].translatedText}`,
+        });
+        console.log(response.data.data.translations[0].translatedText);
+        res.status(200).send(transcriptObject);
+      } catch (error) {
+        res.status(500).send(error);
+      }
+    }
+  });
 }
-
 /* ---------------------------- CATCH-ALL ROUTES ---------------------------- */
 
 app.get('/', (req, res) => {
